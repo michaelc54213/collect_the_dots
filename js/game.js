@@ -1,170 +1,222 @@
-var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update, render: render});
-					
-//TO DO LIST
-//count collision between enemy and bullet
-var character;
-var gameWorldHeight;
-var ground;
-var enemy;
-var bullet;
-var bulletGroup;
-var bulletNumber = 10;
-var text;
-var flipFlop = true;
-var timer;
-var total = 0;
-var enemyHit = 0;
+   var config = {
+        type: Phaser.AUTO,
+        width: 800,
+        height: 600,
+		 		physics: {
+					default: 'arcade',
+					arcade: {
+						gravity: { y: 300 },
+						debug: false
+					}
+				},
+        scene: {
+            preload: preload,
+            create: create,
+            update: update
+        }
+    };
+
+		//TO DO LIST
+		//Create different game states
+			//Menu Title State
+			//Play State
+			//Game over State
+		//Add sound effects to the game
+
+    var game = new Phaser.Game(config);
+
+		//Global variables
+		var walls;
+		var player;
+		var spikes;
+		var platforms;
+		var dots;
+		var bombs;
+		var bomb;
+		var bomb2;
+		var cursors;
+		var ground;
+		var score = 0;
+		var scoreText;
+		var gameOver = false;
+		var spikes;
+		var bombVelocityX = -900
+		var bombVelocityY = -800
+		var wKey;
+
+    function preload ()
+    {
+			this.load.image('wall', '/assets/wall.png');
+			this.load.image('player', '/assets/character.png');
+			this.load.image('spike', '/assets/spike.png');
+			this.load.image('platform', '/assets/platform.png');
+			this.load.image('dot', '/assets/dot.png');
+			this.load.image('ground', '/assets/ground.png');
+			this.load.image('bomb', '/assets/bomb.png');
+			this.load.image('spike', '/assets/spike.png');
+    }
 
 
-function preload() {
-//add prototype for walls and character
-game.load.image('ground', 'assets/ground.png');
-game.load.image('character', 'assets/character.png');
-game.load.image('bullet', 'assets/bullet.png');
-game.load.image('enemy', 'assets/enemy.png');
-}
+    function create ()
+    {
+			walls = this.physics.add.staticGroup();
 
-function create() {
-//load in walls and character for game
-//load in physics
-game.world.setBounds(0, 0, 800, 600);
+			walls.create(20, 400, 'wall');
+			walls.create(780, 400, 'wall');
 
-game.physics.startSystem(Phaser.Physics.ARCADE);
+			platforms = this.physics.add.staticGroup();
 
-character = game.add.sprite(350, 525, 'character');
-enemy = game.add.sprite(350, 125, 'enemy');
-ground = game.add.sprite(0, 550, 'ground');
-bulletGroup = game.add.group();
+			platforms.create(0, 420, 'platform');
+			platforms.create(800, 420, 'platform');
 
-//add bullet text too top right corner
-text = game.add.text(100, 100, 'Bullet Number is ' + bulletNumber);
+			ground = this.physics.add.staticGroup();
+			
+			ground.create(400, 585, 'ground').setScale(2).refreshBody();
 
-//enable physics for player
-game.physics.arcade.enable(character);
-game.physics.arcade.enable(enemy);
-game.physics.arcade.enable(bulletGroup);
+			dots = this.physics.add.staticGroup();
+			dots.create(720, 500, 'dot');
+			dots.create(80, 500, 'dot');
+			dots.create(80, 350, 'dot');
+			dots.create(720, 350, 'dot');
+			dots.create(20, 120, 'dot');
+			dots.create(780, 120, 'dot');
 
-//player physics
-character.body.bounce.y = 0.2;
-character.body.gravity.y = 300;
-character.body.collideWorldBounds = true;
+			bombs = this.physics.add.group();
+			bomb = bombs.create(400, 0, 'bomb');
+			bomb.setBounce(1);
+			bomb.setCollideWorldBounds(true);
+			bomb.setVelocity(Phaser.Math.Between(bombVelocityX, bombVelocityY), 20);
+			bomb.allowGravity = false;
 
-//Enemy physics
-enemy.body.gravity.y = 0.2;
-enemy.body.collideWorldBounds = true;
-enemy.body.bounce.setTo(1, 1);
-enemy.body.immovable = true;
-
-//enable physics for ground 
-game.physics.arcade.enable(ground);
-
-//maes ground unmovable
-ground.body.immovable = true;
-
-// Create our timer
-timer = game.time.create(false);
-
-//Set a TimeEvent to occur after 2 seconds
-timer.loop(1000, updateCounter, this);
-
-// Start the timer running
-timer.start();
+			spikes = this.physics.add.staticGroup();
+			spikes.create(400, 542, 'spike');
+			spikes.create(20, 187, 'spike');
+			spikes.create(780, 187, 'spike');
 
 
-}
+			player = this.physics.add.sprite(500, 500, 'player');
+			
+			player.setBounce(0.2);
+			player.setCollideWorldBounds(true);
+
+			//The score
+			scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#fff' });
+
+			/*
+			dots = this.physics.add.group({
+				key: 'dot',
+				repeat: 4,
+				setXY: {x: 
+			*/
+
+			// Input Events
+			cursors = this.input.keyboard.createCursorKeys();
+
+			// Collide the player and platforms
+			this.physics.add.collider(player, platforms);
+			this.physics.add.collider(player, walls);
+			this.physics.add.collider(player, ground);
+			this.physics.add.collider(dots, ground);
+			this.physics.add.collider(bombs, ground);
+			this.physics.add.collider(bombs, walls);
+			this.physics.add.collider(bombs, platforms);
+
+			// Check collision between dot and player
+			this.physics.add.overlap(player, dots, collectDot, null, this);
+
+			// Check collision between bomb and player
+			this.physics.add.overlap(player, bombs, hitBomb, null, this);
+
+			// Check collision between spikes and player
+			this.physics.add.overlap(player, spikes, hitSpikes, null, this);
+
+    }
 
 
 
-function update() {
-	//check collision between player and ground 
- game.physics.arcade.collide(character, ground);
- game.physics.arcade.collide(bullet, ground);
- game.physics.arcade.collide(bullet, enemy);
-//game.physics.arcarde.overlap(bullet, enemy)
- 
- //set boolean to true for enemy movement
- var enemyMove = true;
- 
- 
- //set movement for character
- var cursors = game.input.keyboard.createCursorKeys();
- var attackKey = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+    function update ()
+    {
 
- character.body.velocity.x = 0;
- enemy.body.velocity.x = 0;
- game.camera.y -= 4; 
+			// Add movement for character
+			if (cursors.left.isDown)
+				{
+					player.setVelocityX(-260);
+				}
 
- //check for movement
- if (cursors.left.isDown)
- {
-	 //move to the left
-	character.body.velocity.x = -600;
- }
- if (cursors.right.isDown)
- {
-	 //move to the right
-	 character.body.velocity.x = 600;
- }
+			else if (cursors.right.isDown)
+			{
+					player.setVelocityX(260);
+			}
 
-	if (enemyMove === true) 
-	{
-		enemy.body.velocity.x = 600;
-		
-	}
+			else 
+			{
+					player.setVelocityX(0);
+			}
 
-	checkEnemyHit();//Check too see if this function is working correctly
+			if (cursors.up.isDown && player.body.touching.down)
+			{
+				player.setVelocityY(-330);
+				console.log("jumping");
+			}
 
-}
+			if (gameOver == true)
+			{
+				score = 0;
+				this.scene.restart();
+				gameOver = false;
+			}
+			
+    }
 
-function checkEnemyHit() {
-	//check collision between enemy and bullet
-	//if collision is true add 1 to counter
-	//removes bullet from enemy
-	if (game.physics.arcade.collide(bullet, enemy))
+		function collectDot(player, dot, bomb, bombVelocityX, bombVelocityY)
 		{
-			bullet.kill();
-			enemyHit++
+			// kill dot from screen
+			dot.disableBody(true, true);
+
+			score += 10;
+			scoreText.setText('Score: ' + score);
+
+			if (dots.countActive(true) === 0)
+			{
+				//You win and restart game
+				dots.create(720, 500, 'dot');
+				dots.create(80, 500, 'dot');
+				dots.create(80, 350, 'dot');
+				dots.create(720, 350, 'dot');
+
+
+			bomb = bombs.create(400, 0, 'bomb');
+			bomb.setBounce(1);
+			bomb.setCollideWorldBounds(true);
+			bomb.setVelocity(Phaser.Math.Between(-900, -800), 20);
+			bomb.allowGravity = false;
+
+
+			}
+
 		}
 
-}
+		function hitBomb(player, bomb)
+		{
+
+			gameOver = true;
+			scoreText.setText('Congrats! You scored: ' + score);
+
+		}
+
+		function hitSpikes(player, spike)
+		{
+			gameover = true;
+			scoreText.setText('Congrats! You scored: ' + score);
+		}
+
+		function gameOver()
+		{
+			//pause scene
+			//show score
+			//press key to restart game
+			this.physics.pause();
+		}
 
 
-function fireBullet() {
-
-	 //used to trigger one event per bullet and then kill that event
-	 bullet = bulletGroup.create(character.position.x, character.position.y, 'bullet');
-	 game.physics.arcade.enable(bullet); //enables physics for bullet
-	 bullet.body.velocity.y = -950;
-   flipFlop = !flipFlop;
-
-}
-
-function updateCounter() {
-
-	total++;
-	fireBullet();
-
-}
-
-function killBullet() {
-
-	bullet.kill();
-
-}
-
-
-function render() {
-
-//	game.debug.cameraInfo(game.camera, 32, 32);
-//	game.debug.text('Elapsed seconds: ' + game.time.totalElapsedSeconds(), 400, 32);
-
-	game.debug.text('Time until event: ' + timer.duration.toFixed(0), 32, 32);
-
-	game.debug.text('Loop Count: ' + total, 32, 64);
-
-	game.debug.text('Enemy Hit: ' + enemyHit, 132, 64);
-
-	
-
-}
 
