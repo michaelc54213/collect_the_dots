@@ -23,6 +23,11 @@
 			//Game over State
 		//Add sound effects to the game
 
+		// Listener for resizing bg image
+		window.addEventListener('resize', () => {
+			this.game.resize(window.innerWidth, window.innerHeight);
+		}, false);
+
     var game = new Phaser.Game(config);
 
 		//Global variables
@@ -42,6 +47,7 @@
 		var spikes;
 		var bombVelocityX = -900
 		var bombVelocityY = -800
+		var sky;
 
     function preload ()
     {
@@ -53,13 +59,16 @@
 			this.load.image('ground', '/assets/ground.png');
 			this.load.image('bomb', '/assets/bomb.png');
 			this.load.image('spike', '/assets/spike.png');
+			this.load.image('bg', '/assets/pixel-art-hill.png');
     }
 
 
     function create ()
     {
-			//Create camera
-			this.cameras.main.setSize(800, 600);
+
+			this.events.on('resize', this.game.resize, this);
+			this.bg = this.add.image(this.game.config.width / 2, this.game.config.height / 2, 'bg');
+			this.bg.setDisplaySize(this.game.config.width, this.game.config.height);
 
 			walls = this.physics.add.staticGroup();
 
@@ -103,7 +112,7 @@
 			player.setCollideWorldBounds(true);
 
 			//The score
-			scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#fff' });
+			scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#000' });
 
 
 			// Input Events
@@ -202,7 +211,6 @@
 		{
 
 			gameOver = true;
-			score = 0;
 			this.physics.pause();
 			scoreText.setText('Congrats! You scored: ' + score);
 
@@ -210,8 +218,7 @@
 
 		function hitSpikes(player, spike)
 		{
-			gameover = true;
-			score = 0;
+			gameOver = true;
 			this.physics.pause();
 			scoreText.setText('Congrats! You scored: ' + score);
 		}
@@ -222,6 +229,13 @@
 			//show score
 			//press key to restart game
 			this.physics.pause();
+		}
+
+		function resize(width, height)
+		{
+			this.cameras.resize(width, height);
+			this.bg.setDisplaySize(width, height);
+
 		}
 
 
