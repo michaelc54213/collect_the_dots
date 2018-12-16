@@ -42,7 +42,6 @@
 		var spikes;
 		var bombVelocityX = -900
 		var bombVelocityY = -800
-		var wKey;
 
     function preload ()
     {
@@ -59,27 +58,31 @@
 
     function create ()
     {
+			//Create camera
+			this.cameras.main.setSize(800, 600);
+
 			walls = this.physics.add.staticGroup();
 
-			walls.create(20, 400, 'wall');
-			walls.create(780, 400, 'wall');
+			walls.create(20, 450, 'wall');
+			walls.create(780, 450, 'wall');
 
 			platforms = this.physics.add.staticGroup();
 
 			platforms.create(0, 420, 'platform');
 			platforms.create(800, 420, 'platform');
 
+
 			ground = this.physics.add.staticGroup();
 			
-			ground.create(400, 585, 'ground').setScale(2).refreshBody();
+			ground.create(400, 595, 'ground').setScale(2).refreshBody();
 
 			dots = this.physics.add.staticGroup();
 			dots.create(720, 500, 'dot');
 			dots.create(80, 500, 'dot');
 			dots.create(80, 350, 'dot');
 			dots.create(720, 350, 'dot');
-			dots.create(20, 120, 'dot');
-			dots.create(780, 120, 'dot');
+			dots.create(20, 210, 'dot');
+			dots.create(780, 210, 'dot');
 
 			bombs = this.physics.add.group();
 			bomb = bombs.create(400, 0, 'bomb');
@@ -89,9 +92,9 @@
 			bomb.allowGravity = false;
 
 			spikes = this.physics.add.staticGroup();
-			spikes.create(400, 542, 'spike');
-			spikes.create(20, 187, 'spike');
-			spikes.create(780, 187, 'spike');
+			spikes.create(400, 552, 'spike');
+			spikes.create(20, 238, 'spike');
+			spikes.create(780, 238, 'spike');
 
 
 			player = this.physics.add.sprite(500, 500, 'player');
@@ -102,15 +105,12 @@
 			//The score
 			scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#fff' });
 
-			/*
-			dots = this.physics.add.group({
-				key: 'dot',
-				repeat: 4,
-				setXY: {x: 
-			*/
 
 			// Input Events
 			cursors = this.input.keyboard.createCursorKeys();
+
+			this.key = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+
 
 			// Collide the player and platforms
 			this.physics.add.collider(player, platforms);
@@ -159,13 +159,15 @@
 				console.log("jumping");
 			}
 
-			if (gameOver == true)
+			if (this.key.isDown && gameOver === true)
 			{
+				console.log('game over!!');
+				this.scene.restart()
 				score = 0;
-				this.scene.restart();
 				gameOver = false;
+
 			}
-			
+
     }
 
 		function collectDot(player, dot, bomb, bombVelocityX, bombVelocityY)
@@ -200,6 +202,8 @@
 		{
 
 			gameOver = true;
+			score = 0;
+			this.physics.pause();
 			scoreText.setText('Congrats! You scored: ' + score);
 
 		}
@@ -207,6 +211,8 @@
 		function hitSpikes(player, spike)
 		{
 			gameover = true;
+			score = 0;
+			this.physics.pause();
 			scoreText.setText('Congrats! You scored: ' + score);
 		}
 
