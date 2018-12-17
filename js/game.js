@@ -21,7 +21,16 @@
 			//Menu Title State
 			//Play State
 			//Game over State
-		//Add sound effects to the game
+		// Get assets for:
+			//Bomb
+			//Player
+			//Platforms
+			//Walls
+			//Dots
+			//Ground
+		//Features to add:
+			//Resume and pause
+			//Being able to shoot bombs
 
 		// Listener for resizing bg image
 		window.addEventListener('resize', () => {
@@ -31,6 +40,7 @@
     var game = new Phaser.Game(config);
 
 		//Global variables
+		var jumpSound;
 		var walls;
 		var player;
 		var spikes;
@@ -43,11 +53,14 @@
 		var ground;
 		var score = 0;
 		var scoreText;
+		var levelText;
 		var gameOver = false;
 		var spikes;
-		var bombVelocityX = -900
-		var bombVelocityY = -800
+		var bombVelocityX = -700
+		var bombVelocityY = -700
 		var sky;
+		var bgMusic;
+		var levelNum = 1
 
     function preload ()
     {
@@ -60,6 +73,9 @@
 			this.load.image('bomb', '/assets/bomb.png');
 			this.load.image('spike', '/assets/spike.png');
 			this.load.image('bg', '/assets/pixel-art-hill.png');
+			this.load.audio('getDot', '/assets/collected-dot.wav');
+			this.load.audio('bg-music', '/assets/ozzed-raining.mp3');
+			this.load.audio('jump-sound', '/assets/plasterbrain-jump.mp3');
     }
 
 
@@ -102,6 +118,10 @@
 
 			spikes = this.physics.add.staticGroup();
 			spikes.create(400, 552, 'spike');
+			spikes.create(370, 552, 'spike');
+			spikes.create(340, 552, 'spike');
+			spikes.create(460, 552, 'spike');
+			spikes.create(430, 552, 'spike');
 			spikes.create(20, 238, 'spike');
 			spikes.create(780, 238, 'spike');
 
@@ -114,11 +134,20 @@
 			//The score
 			scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#000' });
 
+			//The Level
+			levelText = this.add.text(550, 16, 'Level: ' + levelNum, { fontSize: '32px', fill: '#000'});
 
 			// Input Events
 			cursors = this.input.keyboard.createCursorKeys();
 
 			this.key = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+
+			// Sound events
+			this.sound.add('getDot');
+			jumpSound = this.sound.add('jump-sound');
+			bgMusic = this.sound.add('bg-music');
+
+			bgMusic.play();
 
 
 			// Collide the player and platforms
@@ -164,8 +193,9 @@
 
 			if (cursors.up.isDown && player.body.touching.down)
 			{
-				player.setVelocityY(-330);
-				console.log("jumping");
+				player.setVelocityY(-600);
+				player.setGravityY(550);
+				jumpSound.play();
 			}
 
 			if (this.key.isDown && gameOver === true)
@@ -173,7 +203,9 @@
 				console.log('game over!!');
 				this.scene.restart()
 				score = 0;
+				levelNum = 1;
 				gameOver = false;
+				bgMusic.stop();
 
 			}
 
@@ -184,6 +216,7 @@
 			// kill dot from screen
 			dot.disableBody(true, true);
 
+			this.sound.play('getDot');
 			score += 10;
 			scoreText.setText('Score: ' + score);
 
@@ -194,14 +227,19 @@
 				dots.create(80, 500, 'dot');
 				dots.create(80, 350, 'dot');
 				dots.create(720, 350, 'dot');
+				dots.create(20, 210, 'dot');
+				dots.create(780, 210, 'dot');
 
 
-			bomb = bombs.create(400, 0, 'bomb');
-			bomb.setBounce(1);
-			bomb.setCollideWorldBounds(true);
-			bomb.setVelocity(Phaser.Math.Between(-900, -800), 20);
-			bomb.allowGravity = false;
+				bomb = bombs.create(400, 0, 'bomb');
+				bomb.setBounce(1);
+				bomb.setCollideWorldBounds(true);
+				bomb.setVelocity(Phaser.Math.Between(-700, -700), 20);
+				bomb.allowGravity = false;
 
+				levelNum += 1
+
+				levelText.setText('Level: ' + levelNum); 
 
 			}
 
@@ -211,6 +249,7 @@
 		{
 
 			gameOver = true;
+			
 			this.physics.pause();
 			scoreText.setText('Congrats! You scored: ' + score);
 
