@@ -1,25 +1,6 @@
-   var config = {
-        type: Phaser.AUTO,
-        width: 800,
-        height: 600,
-		 		physics: {
-					default: 'arcade',
-					arcade: {
-						gravity: { y: 300 },
-						debug: false
-					}
-				},
-        scene: {
-            preload: preload,
-            create: create,
-            update: update
-        }
-    };
-
 		//TO DO LIST
 		//Create different game states
 			//Menu Title State
-			//Play State
 			//Game over State
 		// Get assets for:
 			//Bomb
@@ -29,17 +10,15 @@
 			//Dots
 			//Ground
 		//Features to add:
-			//Resume and pause
-			//Being able to shoot bombs
+			//Being able to shoot bombs checkDown method useful for this!!
 
-		// Listener for resizing bg image
-		window.addEventListener('resize', () => {
+//Listener event to resize bg image
+window.addEventListener('resize', () => {
 			this.game.resize(window.innerWidth, window.innerHeight);
 		}, false);
 
-    var game = new Phaser.Game(config);
-
-		//Global variables
+//Global variables
+		var pauseText;
 		var jumpSound;
 		var walls;
 		var player;
@@ -51,37 +30,78 @@
 		var bomb2;
 		var cursors;
 		var ground;
-		var score = 0;
+		var score;
 		var scoreText;
 		var levelText;
 		var gameOver = false;
+		var paused = false
 		var spikes;
 		var bombVelocityX = -700;
 		var bombVelocityY = -700;
 		var sky;
 		var bgMusic;
-		var levelNum = 1;
+		var levelNum;
+		var aKey;
 
-    function preload ()
-    {
-			this.load.image('wall', '/assets/wall.png');
-			this.load.image('player', '/assets/character.png');
-			this.load.image('spike', '/assets/spike.png');
-			this.load.image('platform', '/assets/platform.png');
-			this.load.image('dot', '/assets/dot.png');
-			this.load.image('ground', '/assets/ground.png');
-			this.load.image('bomb', '/assets/bomb.png');
-			this.load.image('spike', '/assets/spike.png');
-			this.load.image('bg', '/assets/pixel-art-hill.png');
-			this.load.audio('getDot', '/assets/collected-dot.wav');
-			this.load.audio('bg-music', '/assets/ozzed-raining.mp3');
-			this.load.audio('jump-sound', '/assets/plasterbrain-jump.mp3');
-    }
+//Create Scene A
+var MenuScene = new Phaser.Class({
+	Extends: Phaser.Scene,
 
+	initialize:
 
-    function create ()
-    {
+	function MenuScene()
+	{
+		Phaser.Scene.call(this, { key: 'menuScene'});
+	},
 
+	create: function()
+	{
+		var titleText = this.add.text(150, 100, 'CoffeeGames Presents...', { fontSize: '38px', fill: '#fff' });
+		var titleText2 = this.add.text(250, 300, 'Get The Dots!', { fontSize: '38px', fill: '#fff' });
+		var titleText3 = this.add.text(160, 400, 'Press W To Start!', { fontSize: '38px', fill: '#fff' });
+
+		//Input cursor
+		this.key = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+
+		//Listener for Press
+			this.input.keyboard.on('keydown_W', function (event) 
+			{
+				this.scene.launch('playScene');
+			}, this);
+
+	}
+
+});
+
+var PlayScene= new Phaser.Class({
+		Extends: Phaser.Scene,
+
+		initialize:
+
+		function PlayScene()
+	{
+		Phaser.Scene.call(this, { key: 'playScene' });
+	},
+
+		preload: function() 
+	{
+		//do we need this?
+		this.load.image('wall', '/assets/wall.png');
+		this.load.image('player', '/assets/character.png');
+		this.load.image('spike', '/assets/spike.png');
+		this.load.image('platform', '/assets/platform.png');					
+		this.load.image('dot', '/assets/dot.png');
+		this.load.image('ground', '/assets/ground.png');
+		this.load.image('bomb', '/assets/bomb.png');
+		this.load.image('spike', '/assets/spike.png');
+		this.load.image('bg', '/assets/pixel-art-hill.png');
+		this.load.audio('getDot', '/assets/collected-dot.wav');
+		this.load.audio('bg-music', '/assets/ozzed-raining.mp3');
+		this.load.audio('jump-sound', '/assets/plasterbrain-jump.mp3');
+	},
+
+		create: function()
+	{
 			this.events.on('resize', this.game.resize, this);
 			this.bg = this.add.image(this.game.config.width / 2, this.game.config.height / 2, 'bg');
 			this.bg.setDisplaySize(this.game.config.width, this.game.config.height);
@@ -130,9 +150,13 @@
 			
 			player.setBounce(0.2);
 			player.setCollideWorldBounds(true);
+			
+			// Set score and level number
+			score = 0;
+			levelNum = 1;
 
 			//The score
-			scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#000' });
+			scoreText = this.add.text(16, 16, 'Score: ' + score, { fontSize: '32px', fill: '#000' });
 
 			//The Level
 			levelText = this.add.text(550, 16, 'Level: ' + levelNum, { fontSize: '32px', fill: '#000'});
@@ -140,15 +164,27 @@
 			// Input Events
 			cursors = this.input.keyboard.createCursorKeys();
 
-			this.key = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+			//Pause and resume the game
+			this.input.keyboard.on('keydown_A', function (event) 
+			{
+				this.scene.pause();
+				this.scene.launch('pauseScene');
+			}, this);
+
+			this.input.keyboard.on('keydown_W', function (event)
+		{
+				console.log('game over!!');
+				this.scene.launch('playScene');
+				score = 0;
+				levelNum = 1;
+				gameOver = false;
+		}, this);
 
 			// Sound events
 			this.sound.add('getDot');
 			jumpSound = this.sound.add('jump-sound');
 			bgMusic = this.sound.add('bg-music');
-
 			bgMusic.play();
-
 
 			// Collide the player and platforms
 			this.physics.add.collider(player, platforms);
@@ -168,14 +204,11 @@
 			// Check collision between spikes and player
 			this.physics.add.overlap(player, spikes, this.hitSpikes, null, this);
 
-    }
+	},
 
-
-
-    function update ()
-    {
-
-			// Add movement for character
+	update: function()
+	{
+					// Add movement for character
 			if (cursors.left.isDown)
 				{
 					player.setVelocityX(-260);
@@ -197,24 +230,12 @@
 				player.setGravityY(550);
 				jumpSound.play();
 			}
+			
+		},
 
-			if (this.key.isDown && gameOver === true)
-			{
-				console.log('game over!!');
-				this.scene.restart()
-				score = 0;
-				levelNum = 1;
-				gameOver = false;
-				bgMusic.stop();
-
-			}
-
-    }
-
-		function collectDot(player, dot, bomb, bombVelocityX, bombVelocityY)
+		collectDot: function(player, dot, bomb, bombVelocityX, bombVelocityY)
 		{
-			// kill dot from screen
-			dot.disableBody(true, true);
+						dot.disableBody(true, true);
 
 			this.sound.play('getDot');
 			score += 10;
@@ -242,40 +263,76 @@
 				levelText.setText('Level: ' + levelNum); 
 
 			}
+		},
 
-		}
-
-		function hitBomb(player, bomb)
+		hitBomb: function(player, bomb)
 		{
+			gameOver = true;
+			
+			this.physics.pause();
+			bgMusic.stop();
+			scoreText.setText('Congrats! You scored: ' + score);
+		},
 
+		hitSpikes: function(player, spike)
+		{
+			gameOver = true;
+			this.physics.pause();
+			bgMusic.stop();
+			scoreText.setText('Congrats! You scored: ' + score);
+		},
+
+		resize: function(width, height)
+		{
 			gameOver = true;
 			
 			this.physics.pause();
 			scoreText.setText('Congrats! You scored: ' + score);
-
 		}
 
-		function hitSpikes(player, spike)
-		{
-			gameOver = true;
-			this.physics.pause();
-			scoreText.setText('Congrats! You scored: ' + score);
-		}
+});
 
-		function gameOver()
-		{
-			//pause scene
-			//show score
-			//press key to restart game
-			this.physics.pause();
-		}
+var PauseScene = new Phaser.Class({
+		Extends: Phaser.Scene,
 
-		function resize(width, height)
-		{
-			this.cameras.resize(width, height);
-			this.bg.setDisplaySize(width, height);
+		initialize:
 
+		function PauseScene()
+	{
+		Phaser.Scene.call(this, { key: 'pauseScene' });
+	},
+
+	create: function()
+	{
+		//Set Text for pause scene
+		//pauseText = this.add.text(200, 400, 'Resume game??', { fontSize: '32px', fill: '#000'});
+
+		//Creates Pause Scene
+		this.input.keyboard.on('keydown_A', function (event) {
+			this.scene.pause();
+			this.scene.wake('playScene');
+		}, this);
+	}
+
+
+});
+
+var config = {
+	type: Phaser.AUTO,
+	width: 800,
+	height: 600,
+	physics: {
+		default: 'arcade',
+		arcade: {
+	gravity: { y: 300 },
+		debug: false
 		}
+	},
+	scene: [ MenuScene, PlayScene, PauseScene ]
+};
+
+var game = new Phaser.Game(config);
+
 
 
 
