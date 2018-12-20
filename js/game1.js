@@ -1,7 +1,6 @@
 		//TO DO LIST
 		//Create different game states
 			//Menu Title State
-			//Play State
 			//Game over State
 		// Get assets for:
 			//Bomb
@@ -11,7 +10,6 @@
 			//Dots
 			//Ground
 		//Features to add:
-			//Resume and pause
 			//Being able to shoot bombs checkDown method useful for this!!
 
 //Listener event to resize bg image
@@ -32,7 +30,7 @@ window.addEventListener('resize', () => {
 		var bomb2;
 		var cursors;
 		var ground;
-		var score = 0;
+		var score;
 		var scoreText;
 		var levelText;
 		var gameOver = false;
@@ -42,48 +40,47 @@ window.addEventListener('resize', () => {
 		var bombVelocityY = -700;
 		var sky;
 		var bgMusic;
-		var levelNum = 1;
+		var levelNum;
 		var aKey;
 
 //Create Scene A
-var SceneA = new Phaser.Class({
+var MenuScene = new Phaser.Class({
 	Extends: Phaser.Scene,
 
 	initialize:
 
-	function SceneA()
+	function MenuScene()
 	{
-		Phaser.Scene.call(this, { key: 'sceneA'});
+		Phaser.Scene.call(this, { key: 'menuScene'});
 	},
 
 	create: function()
 	{
 		var titleText = this.add.text(150, 100, 'CoffeeGames Presents...', { fontSize: '38px', fill: '#fff' });
 		var titleText2 = this.add.text(250, 300, 'Get The Dots!', { fontSize: '38px', fill: '#fff' });
-		var titleText3 = this.add.text(160, 400, 'Click Screen To Start!', { fontSize: '38px', fill: '#fff' });
+		var titleText3 = this.add.text(160, 400, 'Press W To Start!', { fontSize: '38px', fill: '#fff' });
 
 		//Input cursor
 		this.key = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
 
-		//Listener for click
-		this.input.once('pointerup', function() 
-		{
-			console.log('Clicky clack!');
-			this.scene.start('sceneB');
-		}, this);
+		//Listener for Press
+			this.input.keyboard.on('keydown_W', function (event) 
+			{
+				this.scene.launch('playScene');
+			}, this);
 
 	}
 
 });
 
-var SceneB = new Phaser.Class({
+var PlayScene= new Phaser.Class({
 		Extends: Phaser.Scene,
 
 		initialize:
 
-		function SceneB()
+		function PlayScene()
 	{
-		Phaser.Scene.call(this, { key: 'sceneB' });
+		Phaser.Scene.call(this, { key: 'playScene' });
 	},
 
 		preload: function() 
@@ -153,9 +150,13 @@ var SceneB = new Phaser.Class({
 			
 			player.setBounce(0.2);
 			player.setCollideWorldBounds(true);
+			
+			// Set score and level number
+			score = 0;
+			levelNum = 1;
 
 			//The score
-			scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#000' });
+			scoreText = this.add.text(16, 16, 'Score: ' + score, { fontSize: '32px', fill: '#000' });
 
 			//The Level
 			levelText = this.add.text(550, 16, 'Level: ' + levelNum, { fontSize: '32px', fill: '#000'});
@@ -167,18 +168,23 @@ var SceneB = new Phaser.Class({
 			this.input.keyboard.on('keydown_A', function (event) 
 			{
 				this.scene.pause();
-				pauseText = this.add.text(200, 200, 'Resume Game? Press A!', { fontSize: '32px', fill: '#000'});
-					
-				this.scene.launch('sceneC');
+				this.scene.launch('pauseScene');
 			}, this);
+
+			this.input.keyboard.on('keydown_W', function (event)
+		{
+				console.log('game over!!');
+				this.scene.launch('playScene');
+				score = 0;
+				levelNum = 1;
+				gameOver = false;
+		}, this);
 
 			// Sound events
 			this.sound.add('getDot');
 			jumpSound = this.sound.add('jump-sound');
 			bgMusic = this.sound.add('bg-music');
-
 			bgMusic.play();
-
 
 			// Collide the player and platforms
 			this.physics.add.collider(player, platforms);
@@ -225,16 +231,6 @@ var SceneB = new Phaser.Class({
 				jumpSound.play();
 			}
 			
-			if (this.key.isDown && gameOver === true)
-			{
-				console.log('game over!!');
-				this.scene.restart()
-				score = 0;
-				levelNum = 1;
-				gameOver = false;
-				bgMusic.stop();
-
-			}
 		},
 
 		collectDot: function(player, dot, bomb, bombVelocityX, bombVelocityY)
@@ -274,14 +270,15 @@ var SceneB = new Phaser.Class({
 			gameOver = true;
 			
 			this.physics.pause();
+			bgMusic.stop();
 			scoreText.setText('Congrats! You scored: ' + score);
 		},
 
 		hitSpikes: function(player, spike)
 		{
 			gameOver = true;
-			
 			this.physics.pause();
+			bgMusic.stop();
 			scoreText.setText('Congrats! You scored: ' + score);
 		},
 
@@ -295,25 +292,25 @@ var SceneB = new Phaser.Class({
 
 });
 
-var SceneC = new Phaser.Class({
+var PauseScene = new Phaser.Class({
 		Extends: Phaser.Scene,
 
 		initialize:
 
-		function SceneC()
+		function PauseScene()
 	{
-		Phaser.Scene.call(this, { key: 'sceneC' });
+		Phaser.Scene.call(this, { key: 'pauseScene' });
 	},
 
 	create: function()
 	{
 		//Set Text for pause scene
+		//pauseText = this.add.text(200, 400, 'Resume game??', { fontSize: '32px', fill: '#000'});
 
 		//Creates Pause Scene
 		this.input.keyboard.on('keydown_A', function (event) {
 			this.scene.pause();
-				pauseText = this.add.text(200, 400, 'Start Game' + levelNum, { fontSize: '32px', fill: '#000'});
-			this.scene.wake('sceneB');
+			this.scene.wake('playScene');
 		}, this);
 	}
 
@@ -331,7 +328,7 @@ var config = {
 		debug: false
 		}
 	},
-	scene: [ SceneA, SceneB, SceneC ]
+	scene: [ MenuScene, PlayScene, PauseScene ]
 };
 
 var game = new Phaser.Game(config);
