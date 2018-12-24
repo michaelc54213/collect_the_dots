@@ -2,3 +2,4 @@ Credits for the game
 Background image courtesy of: Edurmunizz link: https://edermunizz.itch.io/free-pixel-art-hill
 Background music courtesy of: Ozzed link: https://ozzed.net/
 Tilesets courtesy of Hyptosis and Zaban. Link: https://opengameart.org/users/hyptosis 
+Explosion graphic courtesy of J-Robot. Link: https://opengameart.org/users/j-robot

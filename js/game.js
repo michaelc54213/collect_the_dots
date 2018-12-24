@@ -18,6 +18,8 @@ window.addEventListener('resize', () => {
 		}, false);
 
 //Global variables
+		var frameNames;
+		var explosionAnime;
 		var graphics;
 		var graphics2;
 		var bg;
@@ -61,31 +63,75 @@ var MenuScene = new Phaser.Class({
 	{
 		var companyText = this.add.text(150, 100, 'CoffeeGames Presents', { fontSize: '38px', fill: '#fff' });
 		var titleText = this.add.text(250, 200, 'Get The Dots!', { fontSize: '38px', fill: '#fff' });
-		var startText = this.add.text(330, 400, 'Start', { fontSize: '38px', fill: '#fff' });
-		startText.setInteractive(); // Make start text listen for events
-		startText.on('pointerdown', () => { console.log('start menu has been clicked'); });
-
-		var intstructionsText = this.add.text(260, 500, 'Instructions', { fontSize: '38px', fill: '#fff' });
 
 		//Creating graphic
 		//Draw a rectangles
 		graphics = this.add.graphics();
 		graphics.lineStyle(4, 0x00ff00, 1);
+		graphics.fillStyle(0xFFFFFF, 1); 
+		graphics.fillRect(210, 385, 350, 70);
 		graphics.strokeRect(210, 385, 350, 70);
 
 		graphics2 = this.add.graphics();
 		graphics.lineStyle(4, 0xff00, 1);
 		graphics.strokeRect(210, 485, 350, 70);
 
+		var startText = this.add.text(329, 400, 'Start', { fontSize: '38px', fill: '#000' });
+		startText.setInteractive(); // Make start text listen for events
+		startText.on('pointerdown', () => { console.log('start menu has been clicked'); });
 
-		//Input cursor
+		var intstructionsText = this.add.text(260, 500, 'Instructions', { fontSize: '38px', fill: '#fff' });
+
 		this.key = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
 
-		//Listener for Press
-			this.input.keyboard.on('keydown_W', function (event) 
+		//Listener for Enter
+			this.input.keyboard.on('keydown_ENTER', function (event) 
 			{
-				this.scene.launch('playScene');
+				if (startText.x === 329)
+				{
+					this.scene.pause();
+					this.scene.launch('playScene');
+				}
 			}, this);
+
+		//Listen for Up and Down presses
+		this.input.keyboard.on('keydown_UP', function (event)
+		{
+			graphics = this.add.graphics();
+			graphics.fillStyle(0xFFFFFF, 1); 
+			graphics.fillRect(210, 385, 350, 70);
+			graphics.lineStyle(4, 0x00ff00, 1);
+			graphics.strokeRect(210, 385, 350, 70);
+
+			graphics2 = this.add.graphics();
+			graphics.fillStyle(0x000000, 1); 
+			graphics.fillRect(210, 485, 350, 70);
+			graphics.lineStyle(4, 0xff00, 1);
+			graphics.strokeRect(210, 485, 350, 70);
+
+			startText = this.add.text(329, 400, 'Start', { fontSize: '38px', fill: '#000' });
+			intstructionsText = this.add.text(260, 500, 'Instructions', { fontSize: '38px', fill: '#FFF' });
+		}, this);
+
+		this.input.keyboard.on('keydown_DOWN', function (event) {
+			console.log('down arrow was pressed');
+			graphics = this.add.graphics();
+			graphics.fillStyle(0x000000, 1); 
+			graphics.fillRect(210, 385, 350, 70);
+			graphics.lineStyle(4, 0x00ff00, 1);
+			graphics.strokeRect(210, 385, 350, 70);
+
+			graphics2 = this.add.graphics();
+			graphics.fillStyle(0xFFFFFF, 1); 
+			graphics.fillRect(210, 485, 350, 70);
+			graphics.lineStyle(4, 0xff00, 1);
+			graphics.strokeRect(210, 485, 350, 70);
+
+			startText = this.add.text(330, 400, 'Start', { fontSize: '38px', fill: '#FFF' });
+			intstructionsText = this.add.text(260, 500, 'Instructions', { fontSize: '38px', fill: '#000' });
+			console.log(startText.x);
+
+		}, this);
 
 	}
 
@@ -105,17 +151,19 @@ var PlayScene= new Phaser.Class({
 	{
 		//do we need this?
 		this.load.image('wall', '/assets/wall.png');
-		this.load.image('player', '/assets/character.png');
 		this.load.image('spike', '/assets/spike.png');
 		this.load.image('platform', '/assets/platform.png');					
 		this.load.image('dot', '/assets/dot.png');
 		this.load.image('ground', '/assets/ground.png');
-		this.load.image('bomb', '/assets/bomb.png');
+		this.load.image('bomb', '/assets/truezipp-bomb64.png');
 		this.load.image('spike', '/assets/spike.png');
 		this.load.image('bg', '/assets/pixel-art-hill.png');
+		this.load.spritesheet('explosion', '/assets/j-robot-explosion.png', { frameWidth: 96, frameHeight: 96});
+		this.load.spritesheet('user-player-spritesheet', '/assets/user-movement-spritesheet.png', { frameWidth: 32, frameHeight: 32, endFrame: 5});
 		this.load.audio('getDot', '/assets/collected-dot.wav');
 		this.load.audio('bg-music', '/assets/ozzed-raining.mp3');
 		this.load.audio('jump-sound', '/assets/plasterbrain-jump.mp3');
+		this.load.audio('explosion', '/assets/explosion.wav');
 	},
 
 		create: function()
@@ -164,10 +212,29 @@ var PlayScene= new Phaser.Class({
 			spikes.create(780, 238, 'spike');
 
 
-			player = this.physics.add.sprite(500, 500, 'player');
-			
+			player = this.physics.add.sprite(500, 500, 'user-player-spritesheet');
 			player.setBounce(0.2);
 			player.setCollideWorldBounds(true);
+
+			/*
+			this.anims.create({
+				key: 'turn',
+				frames: [ { key: 'user-player-spritesheet', frame: 5 } ], 
+				frameRate: 10,
+			});
+			*/
+
+			this.anims.create({
+				key: 'left',
+				frames: this.anims.generateFrameNumbers('user-player-spritesheet', { start: 1, end: 2 }),
+				frameRate: 10,
+			});
+
+			this.anims.create({
+				key: 'right',
+				frames: this.anims.generateFrameNumbers('user-player-spritesheet', { start: 3, end: 4 }),
+				frameRate: 10,
+			});
 			
 			// Set score and level number
 			score = 0;
@@ -189,10 +256,10 @@ var PlayScene= new Phaser.Class({
 				this.scene.launch('pauseScene');
 			}, this);
 
-			this.input.keyboard.on('keydown_W', function (event)
+			this.input.keyboard.on('keydown_ENTER', function (event)
 		{
 				console.log('game over!!');
-				this.scene.launch('playScene');
+				this.scene.launch('menuScene');
 				score = 0;
 				levelNum = 1;
 				gameOver = false;
@@ -230,14 +297,16 @@ var PlayScene= new Phaser.Class({
 			if (cursors.left.isDown)
 				{
 					player.setVelocityX(-260);
+					player.anims.play('left', true);
 				}
 
-			else if (cursors.right.isDown)
+			else	if (cursors.right.isDown)
 			{
 					player.setVelocityX(260);
+					player.anims.play('right', true);
 			}
 
-			else 
+			else	
 			{
 					player.setVelocityX(0);
 			}
@@ -286,8 +355,23 @@ var PlayScene= new Phaser.Class({
 		hitBomb: function(player, bomb)
 		{
 			gameOver = true;
-			
+			bomb.disableBody(true, true);
+			//player.disableBody(true, true);
+			explosionAnime = this.add.sprite(player.x, player.y, 'explosion');
+
+			this.anims.create({
+				key: 'explode',
+				frames: this.anims.generateFrameNumbers('explosion', { start: 1, end: 12 }),
+				frameRate: 10
+			});
+
+			explosionAnime.anims.play('explode', true);
+
+			var explosion = this.sound.add('explosion');
+			explosion.play();
+
 			this.physics.pause();
+
 			bgMusic.stop();
 			scoreText.setText('Congrats! You scored: ' + score);
 		},
@@ -295,6 +379,20 @@ var PlayScene= new Phaser.Class({
 		hitSpikes: function(player, spike)
 		{
 			gameOver = true;
+			//player.disableBody(true, true);
+			explosionAnime = this.add.sprite(player.x, player.y, 'explosion');
+			this.anims.create({
+				key: 'explode',
+				frames: this.anims.generateFrameNumbers('explosion', { start: 1, end: 12 }),
+				frameRate: 10
+			});
+
+			explosionAnime.anims.play('explode', true);
+			
+			//Create explosion sound
+			var explosion = this.sound.add('explosion');
+			explosion.play();
+
 			this.physics.pause();
 			bgMusic.stop();
 			scoreText.setText('Congrats! You scored: ' + score);
