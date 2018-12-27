@@ -59,6 +59,11 @@ var MenuScene = new Phaser.Class({
 		Phaser.Scene.call(this, { key: 'menuScene'});
 	},
 
+	preload: function() 
+	{
+		this.load.audio('jump-sound', '/assets/plasterbrain-jump.mp3');
+	},
+
 	create: function()
 	{
 		var companyText = this.add.text(150, 100, 'CoffeeGames Presents', { fontSize: '38px', fill: '#fff' });
@@ -111,6 +116,9 @@ var MenuScene = new Phaser.Class({
 
 			startText = this.add.text(329, 400, 'Start', { fontSize: '38px', fill: '#000' });
 			intstructionsText = this.add.text(260, 500, 'Instructions', { fontSize: '38px', fill: '#FFF' });
+			jumpSound = this.sound.add('jump-sound');
+			jumpSound.play();
+
 		}, this);
 
 		this.input.keyboard.on('keydown_DOWN', function (event) {
@@ -129,7 +137,8 @@ var MenuScene = new Phaser.Class({
 
 			startText = this.add.text(330, 400, 'Start', { fontSize: '38px', fill: '#FFF' });
 			intstructionsText = this.add.text(260, 500, 'Instructions', { fontSize: '38px', fill: '#000' });
-			console.log(startText.x);
+			jumpSound = this.sound.add('jump-sound');
+			jumpSound.play();
 
 		}, this);
 
@@ -152,9 +161,8 @@ var PlayScene= new Phaser.Class({
 		//do we need this?
 		this.load.image('wall', '/assets/wall.png');
 		this.load.image('spike', '/assets/spike.png');
-		this.load.image('platform', '/assets/platform.png');					
 		this.load.image('dot', '/assets/dot.png');
-		this.load.image('ground', '/assets/ground.png');
+		this.load.image('ground', '/assets/ground-floor.png');
 		this.load.image('bomb', '/assets/truezipp-bomb64.png');
 		this.load.image('spike', '/assets/spike.png');
 		this.load.image('bg', '/assets/pixel-art-hill.png');
@@ -179,13 +187,14 @@ var PlayScene= new Phaser.Class({
 
 			platforms = this.physics.add.staticGroup();
 
-			platforms.create(0, 420, 'platform');
-			platforms.create(800, 420, 'platform');
+			platforms.create(-140, 420, 'ground')
+			platforms.create(950, 420, 'ground')
 
 
 			ground = this.physics.add.staticGroup();
-			
-			ground.create(400, 595, 'ground').setScale(2).refreshBody();
+				
+			ground.create(400, 570, 'ground').setScale(1.2).refreshBody();
+			ground.displayHeight = game.config.height*.1;
 
 			dots = this.physics.add.staticGroup();
 			dots.create(720, 500, 'dot');
@@ -203,11 +212,11 @@ var PlayScene= new Phaser.Class({
 			bomb.allowGravity = false;
 
 			spikes = this.physics.add.staticGroup();
-			spikes.create(400, 552, 'spike');
-			spikes.create(370, 552, 'spike');
-			spikes.create(340, 552, 'spike');
-			spikes.create(460, 552, 'spike');
-			spikes.create(430, 552, 'spike');
+			spikes.create(400, 528, 'spike');
+			spikes.create(370, 528, 'spike');
+			spikes.create(340, 528, 'spike');
+			spikes.create(460, 528, 'spike');
+			spikes.create(430, 528, 'spike');
 			spikes.create(20, 238, 'spike');
 			spikes.create(780, 238, 'spike');
 
@@ -253,6 +262,7 @@ var PlayScene= new Phaser.Class({
 			this.input.keyboard.on('keydown_A', function (event) 
 			{
 				this.scene.pause();
+				pauseText = this.add.text(380, 250, 'Pause', { fontSize: '32px', fill: '#000'});
 				this.scene.launch('pauseScene');
 			}, this);
 
@@ -356,7 +366,7 @@ var PlayScene= new Phaser.Class({
 		{
 			gameOver = true;
 			bomb.disableBody(true, true);
-			//player.disableBody(true, true);
+			player.disableBody(true, true);
 			explosionAnime = this.add.sprite(player.x, player.y, 'explosion');
 
 			this.anims.create({
@@ -379,7 +389,7 @@ var PlayScene= new Phaser.Class({
 		hitSpikes: function(player, spike)
 		{
 			gameOver = true;
-			//player.disableBody(true, true);
+			player.disableBody(true, true);
 			explosionAnime = this.add.sprite(player.x, player.y, 'explosion');
 			this.anims.create({
 				key: 'explode',
@@ -420,12 +430,11 @@ var PauseScene = new Phaser.Class({
 
 	create: function()
 	{
-		//Set Text for pause scene
-		//pauseText = this.add.text(200, 400, 'Resume game??', { fontSize: '32px', fill: '#000'});
 
 		//Creates Pause Scene
 		this.input.keyboard.on('keydown_A', function (event) {
 			this.scene.pause();
+			pauseText.setText('');
 			this.scene.wake('playScene');
 		}, this);
 	}
