@@ -1,23 +1,12 @@
-		//TO DO LIST
-		//Create different game states
-			//Menu Title State
-			//Game over State
-		// Get assets for:
-			//Bomb
-			//Player
-			//Platforms
-			//Walls
-			//Dots
-			//Ground
-		//Features to add:
-			//Being able to shoot bombs checkDown method useful for this!!
-
 //Listener event to resize bg image
 window.addEventListener('resize', () => {
 			this.game.resize(window.innerWidth, window.innerHeight);
 		}, false);
 
 //Global variables
+		var enterSound;
+		var bgColor;
+		var instructionsText;
 		var frameNames;
 		var explosionAnime;
 		var graphics;
@@ -48,7 +37,7 @@ window.addEventListener('resize', () => {
 		var levelNum;
 		var aKey;
 
-//Create Scene A
+//Create Menu Scene
 var MenuScene = new Phaser.Class({
 	Extends: Phaser.Scene,
 
@@ -62,6 +51,7 @@ var MenuScene = new Phaser.Class({
 	preload: function() 
 	{
 		this.load.audio('jump-sound', '/assets/plasterbrain-jump.mp3');
+		this.load.audio('enter-sound', '/assets/littlerobotsoundfactory_enter.wav');
 	},
 
 	create: function()
@@ -85,17 +75,25 @@ var MenuScene = new Phaser.Class({
 		startText.setInteractive(); // Make start text listen for events
 		startText.on('pointerdown', () => { console.log('start menu has been clicked'); });
 
-		var intstructionsText = this.add.text(260, 500, 'Instructions', { fontSize: '38px', fill: '#fff' });
+		instructionsText = this.add.text(260, 500, 'Instructions', { fontSize: '38px', fill: '#fff' });
 
 		this.key = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+
+		enterSound = this.sound.add('enter-sound');
 
 		//Listener for Enter
 			this.input.keyboard.on('keydown_ENTER', function (event) 
 			{
+				enterSound.play();
 				if (startText.x === 329)
 				{
 					this.scene.pause();
 					this.scene.launch('playScene');
+				}
+				if (instructionsText.x === 259)
+				{
+					this.scene.pause();
+					this.scene.launch('instructionScene');
 				}
 			}, this);
 
@@ -136,12 +134,55 @@ var MenuScene = new Phaser.Class({
 			graphics.strokeRect(210, 485, 350, 70);
 
 			startText = this.add.text(330, 400, 'Start', { fontSize: '38px', fill: '#FFF' });
-			intstructionsText = this.add.text(260, 500, 'Instructions', { fontSize: '38px', fill: '#000' });
+			intstructionsText = this.add.text(259, 500, 'Instructions', { fontSize: '38px', fill: '#000' });
+			instructionsText.x = 259
 			jumpSound = this.sound.add('jump-sound');
 			jumpSound.play();
 
 		}, this);
 
+	}
+
+});
+
+var InstructionScene = new Phaser.Class({
+		Extends: Phaser.Scene,
+
+		initialize:
+
+		function InstructionScene()
+	{
+		Phaser.Scene.call(this, { key: 'instructionScene' });
+	},
+
+	preload: function()
+	{
+		this.load.image('blackBg', 'assets/blackbg.png');
+		this.load.audio('enter-sound', '/assets/littlerobotsoundfactory_enter.wav');
+	},
+
+	create: function() 
+	{
+		enterSound = this.sound.add('enter-sound');
+		var blackBg = this.add.image(400, 300, 'blackBg');
+		var moveInstructions= this.add.text(50, 50, 'Use left and right arrows to move left and right', { fontSize: '32px', fill: '#FFF' });	
+		var jumpInustructions = this.add.text(50, 150, 'Use Up arrow to jump.', { fontSize: '32px', fill: '#FFF' });	
+		var pauseInsutrcions = this.add.text(50, 250, 'Press A to pause and resume', { fontSize: '32px', fill: '#FFF' });	
+		var restartInustrcions = this.add.text(50, 350, 'Press enter twice to restart game', { fontSize: '32px', fill: '#FFF' });	
+			graphics = this.add.graphics();
+			graphics.fillStyle(0xFFFFFF, 1); 
+			graphics.fillRect(210, 485, 350, 70);
+			graphics.lineStyle(4, 0x00ff00, 1);
+			graphics.strokeRect(210, 485, 350, 70);
+
+			startText = this.add.text(329, 500, 'Start', { fontSize: '38px', fill: '#000' });
+
+			this.input.keyboard.on('keydown_ENTER', function (event) 
+			{
+					enterSound.play();
+					this.scene.pause();
+					this.scene.launch('playScene');
+			}, this);
 	}
 
 });
@@ -193,7 +234,7 @@ var PlayScene= new Phaser.Class({
 
 			ground = this.physics.add.staticGroup();
 				
-			ground.create(400, 570, 'ground').setScale(1.2).refreshBody();
+			ground.create(400, 590, 'ground').setScale(1.2).refreshBody();
 			ground.displayHeight = game.config.height*.1;
 
 			dots = this.physics.add.staticGroup();
@@ -212,11 +253,11 @@ var PlayScene= new Phaser.Class({
 			bomb.allowGravity = false;
 
 			spikes = this.physics.add.staticGroup();
-			spikes.create(400, 528, 'spike');
-			spikes.create(370, 528, 'spike');
-			spikes.create(340, 528, 'spike');
-			spikes.create(460, 528, 'spike');
-			spikes.create(430, 528, 'spike');
+			spikes.create(400, 548, 'spike');
+			spikes.create(370, 548, 'spike');
+			spikes.create(340, 548, 'spike');
+			spikes.create(460, 548, 'spike');
+			spikes.create(430, 548, 'spike');
 			spikes.create(20, 238, 'spike');
 			spikes.create(780, 238, 'spike');
 
@@ -453,7 +494,7 @@ var config = {
 		debug: false
 		}
 	},
-	scene: [ MenuScene, PlayScene, PauseScene ]
+	scene: [ MenuScene, InstructionScene, PlayScene, PauseScene ]
 };
 
 var game = new Phaser.Game(config);

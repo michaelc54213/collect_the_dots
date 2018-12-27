@@ -3,3 +3,4 @@ Background image courtesy of: Edurmunizz link: https://edermunizz.itch.io/free-p
 Background music courtesy of: Ozzed link: https://ozzed.net/
 Tilesets courtesy of Hyptosis and Zaban. Link: https://opengameart.org/users/hyptosis 
 Explosion graphic courtesy of J-Robot. Link: https://opengameart.org/users/j-robot
+Enter sound effect courtest of LittleRobotSoundFactory. Link: https://freesound.org/people/LittleRobotSoundFactory/sounds/270311/
